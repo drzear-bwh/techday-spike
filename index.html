@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bar spike</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #f3e9dc; font: 15px/1.4 system-ui, -apple-system, sans-serif; color: #2a2522; overscroll-behavior: none; }
+  #app { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+  .bar { position: fixed; left: 0; right: 0; bottom: 0; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); display: flex; gap: 8px; overflow-x: auto; background: linear-gradient(transparent, rgba(243,233,220,.95) 30%); }
+  .bar button { flex: none; padding: 10px 14px; border: 0; border-radius: 999px; background: #fff; color: inherit; font: inherit; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.15); }
+  .bar button[aria-pressed="true"] { background: #2a2522; color: #fff; }
+  .hud { position: fixed; top: calc(12px + env(safe-area-inset-top)); left: 16px; right: 16px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
+  .hud b { font-size: 18px; }
+  .hud span { background: #fff; padding: 4px 10px; border-radius: 999px; font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+</style>
+  <script type="module" crossorigin src="./assets/index-D2DSp1Fc.js"></script>
+</head>
+<body>
+<div id="app"></div>
+<div class="hud"><b>Bar</b><span id="status">loading…</span></div>
+<div class="bar" id="controls"></div>
+</body>
+</html>
