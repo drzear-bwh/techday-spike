@@ -31,8 +31,9 @@
   .start h2 { margin: 0 0 6px; font-size: 26px; }
   .start p { margin: 0 0 18px; opacity: .75; }
   .start button { border: 0; border-radius: 999px; padding: 14px 26px; background: var(--accent); color: #fff; font: 700 17px system-ui, sans-serif; box-shadow: 0 4px 14px rgba(217,87,63,.4); }
+  .start .link { background: none; box-shadow: none; color: inherit; font-weight: 600; padding: 12px; text-decoration: underline; }
 </style>
-  <script type="module" crossorigin src="./assets/index-C5WAhGNv.js"></script>
+  <script type="module" crossorigin src="./assets/index-Brew8a7b.js"></script>
 </head>
 <body>
 <div id="app"></div>
@@ -49,6 +50,14 @@
     <h2>Hotel spike</h2>
     <p>Tap a room to decorate it. Tilt your phone to look around.</p>
     <button id="go">Open the doors</button>
+  </div>
+</div>
+<div class="start" id="leave" hidden>
+  <div>
+    <h2>Leave your hotel?</h2>
+    <p>Everything you've built is saved on this phone.</p>
+    <button id="stay">Keep building</button>
+    <p><button id="bye" class="link">Leave</button></p>
   </div>
 </div>
 </body>
