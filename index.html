@@ -3,17 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Hotel spike</title>
+<title>Tech Day Hotel</title>
+<link rel="icon" href="./assets/worldhotels-window-DdCuk9G3.svg" type="image/svg+xml">
 <style>
   :root { --bg: #f3e9dc; --ink: #111111; --card: #ffffff; --accent: #EA5B48; } /* WorldHotels: coral, white, black */
   html, body { margin: 0; height: 100%; background: var(--bg); font: 15px/1.4 system-ui, -apple-system, sans-serif; color: var(--ink); overscroll-behavior: none; -webkit-user-select: none; user-select: none; }
   #app { position: fixed; inset: 0; }
   canvas { display: block; width: 100%; height: 100%; touch-action: none; }
-  .hud { position: fixed; top: calc(12px + env(safe-area-inset-top)); left: 16px; right: 16px; display: flex; gap: 8px; align-items: center; pointer-events: none; }
+  .hud { position: fixed; top: calc(12px + env(safe-area-inset-top)); left: 12px; right: 12px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 8px; align-items: center; pointer-events: none; }
   .hud > * { pointer-events: auto; }
-  .hud h1 { flex: 1; margin: 0; font-size: 19px; }
+  .hud .l { justify-self: start; } .hud .r { justify-self: end; display: flex; gap: 6px; align-items: center; }
+  .hud h1 { margin: 0; font-size: 17px; line-height: 1.2; text-align: center; background: var(--card); padding: 7px 14px; border-radius: 999px; box-shadow: 0 1px 3px rgba(0,0,0,.12); max-width: calc(100vw - 190px); overflow-wrap: anywhere; }
+  .chip { display: inline-flex; align-items: center; justify-content: center; text-align: center; }
+  .bubble { position: fixed; z-index: 4; transform: translate(-50%, -100%); max-width: 70vw; background: var(--card); color: var(--ink); font: 700 14px/1.3 system-ui, sans-serif; padding: 8px 12px; border-radius: 16px; box-shadow: 0 4px 14px rgba(0,0,0,.18); pointer-events: none; text-align: center; animation: float 1.9s ease-out forwards; }
+  .bubble::after { content: ''; position: absolute; left: 50%; bottom: -6px; margin-left: -6px; border: 6px solid transparent; border-bottom: 0; border-top-color: var(--card); }
+  @keyframes float { 0% { opacity: 0; transform: translate(-50%, -80%) scale(.7); } 12% { opacity: 1; transform: translate(-50%, -110%) scale(1); } 75% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -190%); } }
   .chip { background: var(--card); padding: 5px 11px; border-radius: 999px; font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,.12); border: 0; font: inherit; color: inherit; }
-  #back[hidden] { display: none; }
+  #back[hidden], #menu[hidden] { display: none; }
   .labels { position: fixed; inset: 0; pointer-events: none; }
   .labels button { position: absolute; transform: translate(-50%, -100%) scale(.9); opacity: 0; pointer-events: none; transition: opacity .3s, transform .3s; border: 0; border-radius: 999px; padding: 4px 10px; font: 600 12px/1.3 system-ui, sans-serif; color: #fff; box-shadow: 0 2px 6px rgba(0,0,0,.25); white-space: nowrap; }
   .labels button.show { opacity: 1; transform: translate(-50%, -100%); pointer-events: auto; }
@@ -22,7 +28,6 @@
   .tabs { display: flex; gap: 4px; overflow-x: auto; padding: 0 16px 6px; scrollbar-width: none; }
   .tabs button { flex: none; border: 0; background: none; padding: 6px 10px; border-radius: 999px; font: 700 13px system-ui, sans-serif; color: var(--ink); opacity: .55; }
   .tabs button[aria-selected="true"] { opacity: 1; background: var(--accent); color: #fff; }
-  .tabs .demo { margin-left: auto; font-weight: 500; }
   .name { display: flex; align-items: center; gap: 10px; margin: 0 16px 8px; background: var(--card); border-radius: 14px; padding: 4px 4px 4px 14px; box-shadow: 0 1px 3px rgba(0,0,0,.15); }
   .name span { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; opacity: .6; white-space: nowrap; }
   .name input { flex: 1; min-width: 0; border: 0; outline: 0; font: 600 16px system-ui, sans-serif; padding: 8px 6px; background: none; color: var(--ink); }
@@ -30,40 +35,95 @@
   .items button { flex: none; padding: 9px 13px; border: 0; border-radius: 14px; background: var(--card); color: inherit; font: inherit; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.15); text-align: left; }
   .items button small { display: block; font-weight: 500; opacity: .6; }
   .items button[aria-pressed="true"] { background: var(--ink); color: #fff; }
-  .start { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(243,233,220,.6); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 5; }
-  .start[hidden] { display: none; }
-  .start div { text-align: center; padding: 24px; }
-  .start h2 { margin: 0 0 6px; font-size: 26px; }
-  .start p { margin: 0 0 18px; opacity: .75; }
-  .start button { border: 0; border-radius: 999px; padding: 14px 26px; background: var(--accent); color: #fff; font: 700 17px system-ui, sans-serif; box-shadow: 0 4px 14px rgba(234,91,72,.4); }
-  .start .link { background: none; box-shadow: none; color: inherit; font-weight: 600; padding: 12px; text-decoration: underline; }
+  .modal { position: fixed; inset: 0; display: grid; place-items: center; padding: 16px; background: rgba(243,233,220,.6); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 5; -webkit-user-select: text; user-select: text; }
+  .modal[hidden] { display: none; }
+  .modal .card { width: min(420px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto; box-sizing: border-box; background: var(--card); border-radius: 22px; padding: 22px 20px 14px; box-shadow: 0 10px 40px rgba(0,0,0,.18); text-align: center; }
+  .modal h2 { margin: 4px 0 8px; font-size: 22px; }
+  .modal p { margin: 0 0 14px; opacity: .8; }
+  .modal .first { font-weight: 700; opacity: 1; font-size: 17px; }
+  .modal .warn { color: #b3361f; opacity: 1; font-weight: 600; font-size: 14px; }
+  .modal button { font: inherit; color: inherit; cursor: pointer; }
+  .modal .primary { display: block; width: 100%; border: 0; border-radius: 999px; padding: 14px 20px; background: var(--accent); color: #fff; font: 700 17px system-ui, sans-serif; box-shadow: 0 4px 14px rgba(234,91,72,.35); margin-top: 6px; }
+  .modal .primary:disabled { opacity: .5; }
+  .modal .link { display: block; width: 100%; border: 0; background: none; padding: 12px; font-weight: 600; text-decoration: underline; }
+  .modal .row { display: block; width: 100%; border: 0; border-bottom: 1px solid #eee; background: none; padding: 14px 4px; font-weight: 600; font-size: 16px; text-align: left; }
+  .modal .langs { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-bottom: 10px; }
+  .modal .lang { border: 1px solid #ddd; background: none; border-radius: 999px; padding: 6px 12px; font-weight: 600; font-size: 14px; }
+  .modal .lang.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .modal input, .modal textarea { box-sizing: border-box; width: 100%; border: 1px solid #ddd; border-radius: 12px; padding: 11px 12px; font: 16px system-ui, sans-serif; margin: 6px 0; color: var(--ink); background: #fff; }
+  .modal input.big { font-size: 24px; text-align: center; letter-spacing: .15em; text-transform: uppercase; font-weight: 700; }
+  .modal .field { display: block; text-align: left; font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+  .modal .code { display: flex; flex-direction: column; gap: 4px; font-size: 13px; opacity: 1; }
+  .modal .code b { font-size: 30px; letter-spacing: .12em; }
+  .checklist { display: flex; gap: 6px; overflow-x: auto; padding: 0 16px 8px; scrollbar-width: none; }
+  .checklist button { flex: none; border: 0; border-radius: 999px; padding: 5px 10px; background: rgba(255,255,255,.7); font: 600 12px system-ui, sans-serif; color: var(--ink); }
+  .checklist button.done { background: var(--ink); color: #fff; }
+  .note { margin: 0 16px 8px; padding: 9px 12px; border-radius: 12px; background: #fff; font-weight: 600; font-size: 14px; }
+  .note .inline { border: 0; background: var(--accent); color: #fff; border-radius: 999px; padding: 4px 10px; margin-left: 4px; font: 700 13px system-ui, sans-serif; }
+  .note.final { background: var(--ink); color: #fff; text-align: center; }
+  .desc { margin: 4px 16px 0; font-size: 13px; opacity: .7; min-height: 1.4em; }
+  .items button:disabled { opacity: .45; }
+  .status { font-size: 11px; font-weight: 600; opacity: .6; }
+  .toast { position: fixed; z-index: 6; left: 50%; top: calc(64px + env(safe-area-inset-top)); transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 999px; font-weight: 600; box-shadow: 0 4px 14px rgba(0,0,0,.2); animation: toast 2.6s ease forwards; white-space: nowrap; max-width: 90vw; overflow: hidden; text-overflow: ellipsis; }
+  @keyframes toast { 0% { opacity: 0; transform: translate(-50%, -10px); } 10%, 85% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; } }
+  .celebrate { position: fixed; z-index: 6; left: 50%; top: 32%; transform: translate(-50%, -50%); background: var(--accent); color: #fff; padding: 18px 26px; border-radius: 22px; text-align: center; box-shadow: 0 10px 40px rgba(234,91,72,.45); animation: pop 2.6s cubic-bezier(.2,1.4,.4,1) forwards; pointer-events: none; }
+  .celebrate b { display: block; font-size: 24px; }
+  .celebrate span { display: block; font-size: 18px; font-weight: 700; opacity: .9; margin-top: 2px; }
+  @keyframes pop { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.5); } 12% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 85% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -60%) scale(.95); } }
+  @media (prefers-reduced-motion: reduce) { .celebrate, .toast, .bubble { animation-duration: .01s; animation-iteration-count: 1; } .celebrate { animation: none; } }
 </style>
-  <script type="module" crossorigin src="./assets/index-Y6NJUMTT.js"></script>
+  
 </head>
 <body>
 <div id="app"></div>
 <div class="labels" id="labels"></div>
 <div class="hud">
-  <button class="chip" id="back" hidden>← Hotel</button>
-  <h1 id="title">Your hotel</h1>
-  <button class="chip" id="card" title="Save a picture">📷</button>
-  <span class="chip" id="points">0 pts</span>
+  <div class="l"><button class="chip" id="back" hidden>←</button><button class="chip" id="menu" aria-label="Menu">☰</button></div>
+  <h1 id="title"></h1>
+  <div class="r"><span class="status" id="status"></span><span class="chip" id="points"></span></div>
 </div>
 <div class="sheet" id="sheet"></div>
-<div class="start" id="start">
-  <div>
-    <h2>Hotel spike</h2>
-    <p>Tap a room to decorate it. Tilt your phone to look around.</p>
-    <button id="go">Open the doors</button>
-  </div>
-</div>
-<div class="start" id="leave" hidden>
-  <div>
-    <h2>Leave your hotel?</h2>
-    <p>Everything you've built is saved on this phone.</p>
-    <button id="stay">Keep building</button>
-    <p><button id="bye" class="link">Leave</button></p>
-  </div>
-</div>
+<div class="modal" id="modal" hidden><div class="card" id="modalBody"></div></div>
+<script type="module">
+// Gate for the locked build (scripts/build_locked.mjs), inlined into index.html.
+// site.bin = salt (16 bytes) + IV (12) + AES-GCM ciphertext of the game's JS bundle.
+// The key is PBKDF2-SHA-256 of the event token, which comes from the QR link
+// (#k=…) or, when the game is reopened without the link, from the game's saved
+// state on this phone. Without the token the bundle can't be read, so the
+// webhook key and the claim-code hashes inside it stay private.
+const ITER = 100000, BIN = "site-3271b3f2.bin", MSG = {"en":{"title":"Scan the QR code at Tech Day to play","body":"The game opens from the QR code on the screen at the start of Tech Day."},"sv":{"title":"Skanna QR-koden på Tech Day för att spela","body":"Spelet öppnas från QR-koden på skärmen i början av Tech Day."},"no":{"title":"Skann QR-koden på Tech Day for å spille","body":"Spillet åpnes fra QR-koden på skjermen i starten av Tech Day."},"da":{"title":"Scan QR-koden på Tech Day for at spille","body":"Spillet åbnes fra QR-koden på skærmen i starten af Tech Day."}};
+
+function savedState() {
+  try { return JSON.parse(localStorage.getItem('techday-hotel-v1') || '{}'); } catch { return {}; }
+}
+const token = () => new URLSearchParams(location.hash.slice(1)).get('k') || savedState().token || null;
+
+function gate(kind) {
+  const nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+  const lang = savedState().lang || ({ nb: 'no', nn: 'no' }[nav] || nav);
+  const m = MSG[lang] || MSG.en;
+  const body = document.getElementById('modalBody');
+  body.innerHTML = kind === 'offline'
+    ? '<h2>No connection</h2><p>The game didn\'t load. Check your connection and reload.</p>'
+    : `<h2>${m.title}</h2><p>${m.body}</p>`;
+  document.getElementById('modal').hidden = false;
+  // a QR scan in the same tab only changes the hash: try again with the new token
+  addEventListener('hashchange', () => location.reload(), { once: true });
+}
+
+(async () => {
+  const k = token();
+  if (!k) return gate('token');
+  try {
+    const buf = await (await fetch(BIN)).arrayBuffer();
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(k), 'PBKDF2', false, ['deriveKey']);
+    const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', hash: 'SHA-256', salt: new Uint8Array(buf, 0, 16), iterations: ITER }, base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+    const js = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: new Uint8Array(buf, 16, 12) }, key, new Uint8Array(buf, 28));
+    await import(URL.createObjectURL(new Blob([js], { type: 'text/javascript' })));
+  } catch (err) {
+    gate(err?.name === 'OperationError' ? 'token' : 'offline');
+  }
+})();
+</script>
 </body>
 </html>
