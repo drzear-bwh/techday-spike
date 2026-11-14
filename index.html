@@ -6,77 +6,115 @@
 <title>Tech Day Hotel</title>
 <link rel="icon" href="./assets/worldhotels-window-DdCuk9G3.svg" type="image/svg+xml">
 <style>
-  :root { --bg: #f3e9dc; --ink: #111111; --card: #ffffff; --accent: #EA5B48; } /* WorldHotels: coral, white, black */
-  html, body { margin: 0; height: 100%; background: var(--bg); font: 15px/1.4 system-ui, -apple-system, sans-serif; color: var(--ink); overscroll-behavior: none; -webkit-user-select: none; user-select: none; }
+  :root { --bg: #f3e9dc; --ink: #111111; --card: #ffffff; --accent: #EA5B48; --accent-dark: #c9412f; --ok: #2f7d55; } /* WorldHotels: coral, white, black */
+  html, body { margin: 0; height: 100%; background: var(--bg); font: 18px/1.4 system-ui, -apple-system, sans-serif; color: var(--ink); overscroll-behavior: none; -webkit-user-select: none; user-select: none; }
+  button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
   #app { position: fixed; inset: 0; }
   canvas { display: block; width: 100%; height: 100%; touch-action: none; }
-  .hud { position: fixed; top: calc(12px + env(safe-area-inset-top)); left: 12px; right: 12px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 8px; align-items: center; pointer-events: none; }
+
+  /* top bar: menu, whole hotel, points */
+  .hud { position: fixed; top: calc(10px + env(safe-area-inset-top)); left: 10px; right: 10px; display: flex; gap: 8px; align-items: center; pointer-events: none; z-index: 3; }
   .hud > * { pointer-events: auto; }
-  .hud .l { justify-self: start; } .hud .r { justify-self: end; display: flex; gap: 6px; align-items: center; }
-  .hud h1 { margin: 0; font-size: 17px; line-height: 1.2; text-align: center; background: var(--card); padding: 7px 14px; border-radius: 999px; box-shadow: 0 1px 3px rgba(0,0,0,.12); max-width: calc(100vw - 190px); overflow-wrap: anywhere; }
-  .chip { display: inline-flex; align-items: center; justify-content: center; text-align: center; }
-  .bubble { position: fixed; z-index: 4; transform: translate(-50%, -100%); max-width: 70vw; background: var(--card); color: var(--ink); font: 700 14px/1.3 system-ui, sans-serif; padding: 8px 12px; border-radius: 16px; box-shadow: 0 4px 14px rgba(0,0,0,.18); pointer-events: none; text-align: center; animation: float 1.9s ease-out forwards; }
-  .bubble::after { content: ''; position: absolute; left: 50%; bottom: -6px; margin-left: -6px; border: 6px solid transparent; border-bottom: 0; border-top-color: var(--card); }
-  @keyframes float { 0% { opacity: 0; transform: translate(-50%, -80%) scale(.7); } 12% { opacity: 1; transform: translate(-50%, -110%) scale(1); } 75% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -190%); } }
-  .chip { background: var(--card); padding: 5px 11px; border-radius: 999px; font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,.12); border: 0; font: inherit; color: inherit; }
-  #back[hidden], #menu[hidden] { display: none; }
-  .sheet { position: fixed; left: 0; right: 0; bottom: 0; padding: 10px 0 calc(12px + env(safe-area-inset-bottom)); background: linear-gradient(transparent, rgba(243,233,220,.96) 18px); }
-  .tabs { display: flex; gap: 4px; overflow-x: auto; padding: 0 16px 6px; scrollbar-width: none; }
-  .tabs button { flex: none; border: 0; background: none; padding: 6px 10px; border-radius: 999px; font: 700 13px system-ui, sans-serif; color: var(--ink); opacity: .55; }
-  .tabs button[aria-selected="true"] { opacity: 1; background: var(--accent); color: #fff; }
-  .name { display: flex; align-items: center; gap: 10px; margin: 0 16px 8px; background: var(--card); border-radius: 14px; padding: 4px 4px 4px 14px; box-shadow: 0 1px 3px rgba(0,0,0,.15); }
-  .name span { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; opacity: .6; white-space: nowrap; }
-  .name input { flex: 1; min-width: 0; border: 0; outline: 0; font: 600 16px system-ui, sans-serif; padding: 8px 6px; background: none; color: var(--ink); }
-  .items { display: flex; gap: 8px; overflow-x: auto; padding: 2px 16px 4px; scrollbar-width: none; }
-  .items button { flex: none; padding: 9px 13px; border: 0; border-radius: 14px; background: var(--card); color: inherit; font: inherit; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.15); text-align: left; }
-  .items button small { display: block; font-weight: 500; opacity: .6; }
-  .items button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+  .btn { min-height: 52px; min-width: 52px; border: 0; border-radius: 999px; background: var(--card); font-weight: 800; font-size: 19px; padding: 0 18px; box-shadow: 0 2px 8px rgba(0,0,0,.16); }
+  #menu { padding: 0; font-size: 24px; }
+  #back[hidden] { display: none; }
+  .hud .spacer { flex: 1; }
+  .pill { display: flex; align-items: baseline; gap: 6px; min-height: 52px; box-sizing: border-box; padding: 9px 18px; border-radius: 999px; background: var(--accent); color: #fff; font-weight: 700; font-size: 17px; box-shadow: 0 4px 14px rgba(234,91,72,.4); white-space: nowrap; }
+  .pill b { font-size: 28px; line-height: 1; }
+  .pill.bump { animation: bump .6s cubic-bezier(.2,1.6,.4,1); }
+  @keyframes bump { 0% { transform: scale(1); } 30% { transform: scale(1.25); } 100% { transform: scale(1); } }
+  .status { position: fixed; top: calc(68px + env(safe-area-inset-top)); right: 16px; font-size: 13px; font-weight: 700; opacity: .6; z-index: 3; }
+  h1#title { position: fixed; z-index: 2; top: calc(70px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); margin: 0; max-width: calc(100vw - 40px); box-sizing: border-box; font-size: 20px; line-height: 1.2; text-align: center; background: rgba(255,255,255,.92); padding: 8px 18px; border-radius: 999px; box-shadow: 0 1px 4px rgba(0,0,0,.12); overflow-wrap: anywhere; pointer-events: none; }
+
+  /* the "+" on every changeable thing */
+  #markers { position: fixed; inset: 0; pointer-events: none; z-index: 1; }
+  .plus { position: absolute; left: -30px; top: -30px; width: 60px; height: 60px; border-radius: 50%; border: 4px solid #fff; background: var(--accent); color: #fff; font: 800 40px/1 system-ui, sans-serif; padding: 0 0 4px; pointer-events: auto; box-shadow: 0 4px 14px rgba(0,0,0,.3); }
+  .plus::after { content: ''; position: absolute; inset: -4px; border-radius: 50%; border: 4px solid var(--accent); animation: ring 1.6s ease-out infinite; }
+  .plus[hidden] { display: none; }
+  @keyframes ring { 0% { transform: scale(1); opacity: .9; } 100% { transform: scale(1.7); opacity: 0; } }
+  .plus { animation: breathe 1.6s ease-in-out infinite; }
+  @keyframes breathe { 0%, 100% { scale: 1; } 50% { scale: 1.1; } }
+
+  /* bottom: room buttons (whole hotel) and the coach line */
+  .sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 2; padding: 14px 12px calc(12px + env(safe-area-inset-bottom)); background: linear-gradient(transparent, rgba(243,233,220,.97) 22px); display: flex; flex-direction: column; gap: 10px; }
+  .rooms { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+  .rooms button { min-height: 52px; border: 0; border-radius: 16px; background: var(--card); font-weight: 700; font-size: 17px; text-align: left; padding: 8px 12px; display: flex; gap: 8px; align-items: center; box-shadow: 0 1px 4px rgba(0,0,0,.14); }
+  .rooms button.done { background: var(--ink); color: #fff; }
+  .coach { display: flex; align-items: center; gap: 10px; min-height: 60px; box-sizing: border-box; width: 100%; border: 0; border-radius: 18px; background: var(--card); padding: 12px 18px; font-weight: 700; font-size: 19px; text-align: left; box-shadow: 0 2px 10px rgba(0,0,0,.16); }
+  .coach span { flex: 1; }
+  .coach i { font-style: normal; font-size: 34px; line-height: 1; color: var(--accent); }
+  button.coach { border-left: 8px solid var(--accent); }
+  .locked { background: var(--card); border-radius: 18px; padding: 16px 18px; box-shadow: 0 2px 10px rgba(0,0,0,.16); }
+  .locked b { font-size: 21px; }
+  .locked p { margin: 6px 0 12px; font-size: 18px; }
+  .big { display: block; width: 100%; min-height: 54px; border: 0; border-radius: 999px; background: var(--ink); color: #fff; font-weight: 700; font-size: 18px; }
+
+  /* modals */
   .modal { position: fixed; inset: 0; display: grid; place-items: center; padding: 16px; background: rgba(243,233,220,.6); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 5; -webkit-user-select: text; user-select: text; }
   .modal[hidden] { display: none; }
-  .modal .card { width: min(420px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto; box-sizing: border-box; background: var(--card); border-radius: 22px; padding: 22px 20px 14px; box-shadow: 0 10px 40px rgba(0,0,0,.18); text-align: center; }
-  .modal h2 { margin: 4px 0 8px; font-size: 22px; }
-  .modal p { margin: 0 0 14px; opacity: .8; }
-  .modal .first { font-weight: 700; opacity: 1; font-size: 17px; }
-  .modal .warn { color: #b3361f; opacity: 1; font-weight: 600; font-size: 14px; }
-  .modal button { font: inherit; color: inherit; cursor: pointer; }
-  .modal .primary { display: block; width: 100%; border: 0; border-radius: 999px; padding: 14px 20px; background: var(--accent); color: #fff; font: 700 17px system-ui, sans-serif; box-shadow: 0 4px 14px rgba(234,91,72,.35); margin-top: 6px; }
+  .modal .card { width: min(460px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto; box-sizing: border-box; background: var(--card); border-radius: 24px; padding: 24px 20px 16px; box-shadow: 0 10px 40px rgba(0,0,0,.18); text-align: center; }
+  .modal h2 { margin: 4px 0 10px; font-size: 26px; line-height: 1.2; }
+  .modal p { margin: 0 0 14px; opacity: .85; }
+  .modal .first { font-weight: 700; opacity: 1; font-size: 20px; }
+  .modal .warn { color: #b3361f; opacity: 1; font-weight: 600; }
+  .modal .primary { display: block; width: 100%; min-height: 56px; border: 0; border-radius: 999px; padding: 14px 20px; background: var(--accent); color: #fff; font: 800 20px system-ui, sans-serif; box-shadow: 0 4px 14px rgba(234,91,72,.35); margin-top: 8px; }
   .modal .primary:disabled { opacity: .5; }
-  .modal .link { display: block; width: 100%; border: 0; background: none; padding: 12px; font-weight: 600; text-decoration: underline; }
-  .modal .row { display: block; width: 100%; border: 0; border-bottom: 1px solid #eee; background: none; padding: 14px 4px; font-weight: 600; font-size: 16px; text-align: left; }
+  .modal .link { display: block; width: 100%; min-height: 48px; border: 0; background: none; padding: 12px; font-weight: 600; text-decoration: underline; }
+  .modal .row { display: block; width: 100%; min-height: 56px; border: 0; border-bottom: 1px solid #eee; background: none; padding: 14px 4px; font-weight: 700; font-size: 19px; text-align: left; }
   .modal .langs { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-bottom: 10px; }
-  .modal .lang { border: 1px solid #ddd; background: none; border-radius: 999px; padding: 6px 12px; font-weight: 600; font-size: 14px; }
+  .modal .lang { min-height: 48px; border: 2px solid #ddd; background: none; border-radius: 999px; padding: 6px 14px; font-weight: 700; font-size: 17px; }
   .modal .lang.on { background: var(--ink); color: #fff; border-color: var(--ink); }
-  .modal input, .modal textarea { box-sizing: border-box; width: 100%; border: 1px solid #ddd; border-radius: 12px; padding: 11px 12px; font: 16px system-ui, sans-serif; margin: 6px 0; color: var(--ink); background: #fff; }
-  .modal input.big { font-size: 24px; text-align: center; letter-spacing: .15em; text-transform: uppercase; font-weight: 700; }
-  .modal .field { display: block; text-align: left; font-size: 13px; font-weight: 700; margin-bottom: 8px; }
-  .modal .code { display: flex; flex-direction: column; gap: 4px; font-size: 13px; opacity: 1; }
-  .modal .code b { font-size: 30px; letter-spacing: .12em; }
-  .checklist { display: flex; gap: 6px; overflow-x: auto; padding: 0 16px 8px; scrollbar-width: none; }
-  .checklist button { flex: none; border: 0; border-radius: 999px; padding: 5px 10px; background: rgba(255,255,255,.7); font: 600 12px system-ui, sans-serif; color: var(--ink); }
-  .checklist button.done { background: var(--ink); color: #fff; }
-  .note { margin: 0 16px 8px; padding: 9px 12px; border-radius: 12px; background: #fff; font-weight: 600; font-size: 14px; }
-  .note .inline { border: 0; background: var(--accent); color: #fff; border-radius: 999px; padding: 4px 10px; margin-left: 4px; font: 700 13px system-ui, sans-serif; }
-  .note.final { background: var(--ink); color: #fff; text-align: center; }
-  .desc { margin: 4px 16px 0; font-size: 13px; opacity: .7; min-height: 1.4em; }
-  .items button:disabled { opacity: .45; }
-  .status { font-size: 11px; font-weight: 600; opacity: .6; }
-  .toast { position: fixed; z-index: 6; left: 50%; top: calc(64px + env(safe-area-inset-top)); transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 999px; font-weight: 600; box-shadow: 0 4px 14px rgba(0,0,0,.2); animation: toast 2.6s ease forwards; white-space: nowrap; max-width: 90vw; overflow: hidden; text-overflow: ellipsis; }
+  .modal input, .modal textarea { box-sizing: border-box; width: 100%; min-height: 52px; border: 2px solid #ddd; border-radius: 14px; padding: 11px 14px; font: 18px system-ui, sans-serif; margin: 6px 0; color: var(--ink); background: #fff; }
+  .modal input.big { font-size: 26px; text-align: center; letter-spacing: .15em; text-transform: uppercase; font-weight: 700; }
+  .modal input.big-name { font-size: 24px; text-align: center; font-weight: 700; }
+  .modal .field { display: block; text-align: left; font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+  .modal .code { display: flex; flex-direction: column; gap: 4px; font-size: 15px; opacity: 1; }
+  .modal .code b { font-size: 32px; letter-spacing: .12em; }
+
+  /* the change panel: a tall sheet of big cards */
+  .modal.shop { padding: 0; place-items: end center; }
+  .modal.shop .card { width: min(560px, 100%); max-height: 92dvh; border-radius: 26px 26px 0 0; padding: 0 14px calc(18px + env(safe-area-inset-bottom)); text-align: left; }
+  .panel-head { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 10px; background: var(--card); padding: 18px 2px 8px; }
+  .panel-head h2 { flex: 1; margin: 0; }
+  .x { width: 52px; height: 52px; flex: none; border: 0; border-radius: 50%; background: #f1ece5; font-size: 24px; font-weight: 800; }
+  .modal .have { margin: 0 2px 12px; font-weight: 700; font-size: 18px; opacity: 1; color: var(--accent-dark); }
+  .cards { display: flex; flex-direction: column; gap: 12px; }
+  .item { display: grid; grid-template-columns: 116px 1fr; gap: 6px 14px; align-items: center; padding: 12px; border-radius: 20px; background: #faf6f0; border: 3px solid transparent; }
+  .item.chosen { border-color: var(--ok); background: #eef7f1; }
+  .item .pic { width: 116px; height: 116px; border-radius: 14px; background: #fff6e6; object-fit: contain; grid-row: span 1; }
+  .item .txt { display: flex; flex-direction: column; gap: 4px; }
+  .item .txt b { font-size: 20px; line-height: 1.2; }
+  .item .txt span { font-size: 16px; line-height: 1.35; opacity: .8; }
+  .item .buy { grid-column: 1 / -1; min-height: 56px; border: 0; border-radius: 999px; background: var(--accent); color: #fff; font-weight: 800; font-size: 20px; box-shadow: 0 3px 10px rgba(234,91,72,.3); }
+  .item .buy.free { background: var(--ink); box-shadow: none; }
+  .item .buy:disabled { background: #d9d2c8; color: #6b625a; box-shadow: none; }
+  .item.chosen .buy:disabled { background: var(--ok); color: #fff; }
+  .item small { grid-column: 1 / -1; text-align: center; font-size: 16px; font-weight: 600; opacity: .75; }
+
+  .bubble { position: fixed; z-index: 4; transform: translate(-50%, -100%); max-width: 70vw; background: var(--card); color: var(--ink); font: 700 17px/1.3 system-ui, sans-serif; padding: 10px 14px; border-radius: 16px; box-shadow: 0 4px 14px rgba(0,0,0,.18); pointer-events: none; text-align: center; animation: float 1.9s ease-out forwards; }
+  .bubble::after { content: ''; position: absolute; left: 50%; bottom: -6px; margin-left: -6px; border: 6px solid transparent; border-bottom: 0; border-top-color: var(--card); }
+  @keyframes float { 0% { opacity: 0; transform: translate(-50%, -80%) scale(.7); } 12% { opacity: 1; transform: translate(-50%, -110%) scale(1); } 75% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -190%); } }
+  .toast { position: fixed; z-index: 6; left: 50%; top: calc(124px + env(safe-area-inset-top)); transform: translateX(-50%); background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 18px; font-weight: 700; box-shadow: 0 4px 14px rgba(0,0,0,.2); animation: toast 2.6s ease forwards; width: max-content; max-width: 88vw; text-align: center; }
   @keyframes toast { 0% { opacity: 0; transform: translate(-50%, -10px); } 10%, 85% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; } }
-  .celebrate { position: fixed; z-index: 6; left: 50%; top: 32%; transform: translate(-50%, -50%); background: var(--accent); color: #fff; padding: 18px 26px; border-radius: 22px; text-align: center; box-shadow: 0 10px 40px rgba(234,91,72,.45); animation: pop 2.6s cubic-bezier(.2,1.4,.4,1) forwards; pointer-events: none; }
-  .celebrate b { display: block; font-size: 24px; }
-  .celebrate span { display: block; font-size: 18px; font-weight: 700; opacity: .9; margin-top: 2px; }
+  .celebrate { position: fixed; z-index: 6; left: 50%; top: 32%; transform: translate(-50%, -50%); background: var(--accent); color: #fff; padding: 20px 28px; border-radius: 24px; text-align: center; box-shadow: 0 10px 40px rgba(234,91,72,.45); animation: pop 2.6s cubic-bezier(.2,1.4,.4,1) forwards; pointer-events: none; width: max-content; max-width: 86vw; }
+  .celebrate b { display: block; font-size: 28px; }
+  .celebrate span { display: block; font-size: 20px; font-weight: 700; opacity: .9; margin-top: 2px; }
   @keyframes pop { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.5); } 12% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 85% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -60%) scale(.95); } }
-  @media (prefers-reduced-motion: reduce) { .celebrate, .toast, .bubble { animation-duration: .01s; animation-iteration-count: 1; } .celebrate { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .celebrate, .toast, .bubble { animation-duration: .01s; animation-iteration-count: 1; } .celebrate { animation: none; } .plus, .plus::after, .pill.bump { animation: none; } }
 </style>
   
 </head>
 <body>
 <div id="app"></div>
 <div class="hud">
-  <div class="l"><button class="chip" id="back" hidden>←</button><button class="chip" id="menu" aria-label="Menu">☰</button></div>
-  <h1 id="title"></h1>
-  <div class="r"><span class="status" id="status"></span><span class="chip" id="points"></span></div>
+  <button class="btn" id="menu" aria-label="Menu">☰</button>
+  <button class="btn" id="back" hidden></button>
+  <span class="spacer"></span>
+  <span class="pill" id="points"></span>
 </div>
+<span class="status" id="status"></span>
+<h1 id="title"></h1>
+<div id="markers"></div>
 <div class="sheet" id="sheet"></div>
 <div class="modal" id="modal" hidden><div class="card" id="modalBody"></div></div>
 <script type="module">
@@ -86,7 +124,7 @@
 // (#k=…) or, when the game is reopened without the link, from the game's saved
 // state on this phone. Without the token the bundle can't be read, so the
 // webhook key and the claim-code hashes inside it stay private.
-const ITER = 100000, BIN = "site-427e10c5.bin", MSG = {"en":{"title":"Scan the QR code at Tech Day to play","body":"The game opens from the QR code on the screen at the start of Tech Day."},"sv":{"title":"Skanna QR-koden på Tech Day för att spela","body":"Spelet öppnas från QR-koden på skärmen i början av Tech Day."},"no":{"title":"Skann QR-koden på Tech Day for å spille","body":"Spillet åpnes fra QR-koden på skjermen i starten av Tech Day."},"da":{"title":"Scan QR-koden på Tech Day for at spille","body":"Spillet åbnes fra QR-koden på skærmen i starten af Tech Day."}};
+const ITER = 100000, BIN = "site-b52794c6.bin", MSG = {"en":{"title":"Scan the QR code at Tech Day to play","body":"The game opens from the QR code on the screen at the start of Tech Day."},"sv":{"title":"Skanna QR-koden på Tech Day för att spela","body":"Spelet öppnas från QR-koden på skärmen i början av Tech Day."},"no":{"title":"Skann QR-koden på Tech Day for å spille","body":"Spillet åpnes fra QR-koden på skjermen i starten av Tech Day."},"da":{"title":"Scan QR-koden på Tech Day for at spille","body":"Spillet åbnes fra QR-koden på skærmen i starten af Tech Day."}};
 
 function savedState() {
   try { return JSON.parse(localStorage.getItem('techday-hotel-v1') || '{}'); } catch { return {}; }
